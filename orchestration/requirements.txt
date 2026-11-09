@@ -1,5 +1,5 @@
 # Orchestration only (CI and home computer). Not needed for the daily Windows task.
-dagster==1.13.26
+dagster==1.13.29
 dagster-webserver==1.13.26
 dagster-dbt==0.29.26
 dbt-duckdb==1.10.1
