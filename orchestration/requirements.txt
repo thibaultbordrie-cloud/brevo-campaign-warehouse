@@ -2,4 +2,4 @@
 dagster==1.13.26
 dagster-webserver==1.13.26
 dagster-dbt==0.29.26
-dbt-duckdb==1.10.1
+dbt-duckdb==1.11.1
