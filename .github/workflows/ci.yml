@@ -51,7 +51,7 @@ jobs:
         run: python run_dbt.py docs generate --static --profiles-dir .
 
       - name: Keep the documentation as a downloadable artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dbt-docs
           path: transform/target/static_index.html
