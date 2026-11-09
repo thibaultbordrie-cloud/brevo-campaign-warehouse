@@ -1,0 +1,10 @@
+{"count": 3, "campaigns": [
+ {"id": 901, "name": "EXEMPLE_NL_Mercredi", "subject": "Exemple fictif 1", "type": "classic", "tag": "NL", "status": "sent",
+  "createdAt": "2026-10-10T08:00:00.000Z", "sentDate": "2026-10-14T08:49:00.000Z",
+  "statistics": {"globalStats": {"sent": 1000, "delivered": 980, "uniqueViews": 180, "trackableViews": 150, "appleMppOpens": 40,
+   "uniqueClicks": 12, "clickers": 11, "unsubscriptions": 1, "hardBounces": 5, "softBounces": 15, "complaints": 0}}},
+ {"id": 902, "name": "EXEMPLE_LOCAL_Tournoi", "subject": "Exemple fictif 2", "type": "classic", "tag": "LOCAL", "status": "sent",
+  "createdAt": "2026-10-12T08:00:00.000Z", "sentDate": "2026-10-17T08:10:00.000Z",
+  "statistics": {"globalStats": {"sent": 500, "delivered": 490, "uniqueViews": 35, "trackableViews": 30, "appleMppOpens": 10,
+   "uniqueClicks": 1, "clickers": 1, "unsubscriptions": 3, "hardBounces": 2, "softBounces": 8, "complaints": 0}}}
+]}

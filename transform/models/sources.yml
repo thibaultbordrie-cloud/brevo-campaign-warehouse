@@ -1,0 +1,40 @@
+version: 2
+
+sources:
+  - name: brevo
+    description: Tables loaded every morning by the Python ingestion (src/brevo_warehouse/ingest.py).
+    # DuckDB: tables in "main". BigQuery: dataset "brevo_raw", loaded by scripts/load_to_bigquery.py.
+    schema: "{{ 'brevo_raw' if target.type == 'bigquery' else 'main' }}"
+    tables:
+      - name: dim_campaign
+        description: One row per email campaign, as last seen in the API.
+        columns:
+          - name: campaign_id
+            data_tests: [unique, not_null]
+      - name: fact_campaign_stats
+        description: Global statistics of each campaign, one row per campaign per snapshot day.
+        columns:
+          - name: campaign_id
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('brevo', 'dim_campaign')
+                    field: campaign_id
+          - name: snapshot_date
+            data_tests: [not_null]
+      - name: dim_list
+        description: One row per contact list.
+        columns:
+          - name: list_id
+            data_tests: [unique, not_null]
+      - name: fact_list_size
+        description: Size of each contact list, one row per list per snapshot day.
+        columns:
+          - name: list_id
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('brevo', 'dim_list')
+                    field: list_id

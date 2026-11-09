@@ -1,0 +1,112 @@
+# Continuous integration: on every push, GitHub's servers install the project, lint it, run the Python
+# tests, build a warehouse with FICTIONAL data, run every dbt model and data test on it,
+# then run the whole Dagster pipeline (load -> freshness check -> dbt) twice: once healthy,
+# once with stale data, which must stop the pipeline before dbt.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+# Least privilege: the default token can only read the repository.
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install the project, pytest, dbt and Dagster
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]" -r orchestration/requirements.txt
+
+      - name: Lint (undefined names, syntax errors)
+        run: |
+          python -m pip install ruff
+          ruff check --select F,E9 .
+
+      - name: Python tests
+        run: python -m pytest
+
+      - name: Build a demo warehouse (fictional data)
+        run: python scripts/make_demo_db.py data/demo.duckdb
+
+      - name: dbt build (models + data tests)
+        working-directory: transform
+        env:
+          WAREHOUSE_DB: ../data/demo.duckdb
+        run: python run_dbt.py build --profiles-dir .
+
+      - name: dbt documentation
+        working-directory: transform
+        env:
+          WAREHOUSE_DB: ../data/demo.duckdb
+        run: python run_dbt.py docs generate --static --profiles-dir .
+
+      - name: Keep the documentation as a downloadable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-docs
+          path: transform/target/static_index.html
+
+      - name: Dagster - whole pipeline on fictional data
+        env:
+          WAREHOUSE_TODAY: "2026-10-21"
+          DAGSTER_HOME: ${{ runner.temp }}/dagster
+        run: |
+          mkdir -p "$DAGSTER_HOME"
+          dagster definitions validate -f orchestration/definitions.py
+          dagster asset materialize -f orchestration/definitions.py --select "*"
+
+      - name: Dagster - stale data must stop the pipeline
+        env:
+          WAREHOUSE_TODAY: "2026-10-25"
+          DAGSTER_HOME: ${{ runner.temp }}/dagster
+        run: |
+          if dagster asset materialize -f orchestration/definitions.py --select "*"; then
+            echo "The freshness check should have stopped this run."; exit 1
+          fi
+          echo "Stopped as expected: dbt did not run on stale data."
+
+  # Cloud copy (bloc 5): FICTIONAL data in a BigQuery sandbox. Runs only on main, and only once
+  # the three GCP variables exist in the repository settings (see docs/CLOUD.md).
+  bigquery:
+    needs: test-and-build
+    if: github.ref == 'refs/heads/main' && vars.GCP_PROJECT_ID != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # lets the run ask GitHub for an identity token, instead of storing a key
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Sign in to Google without a key
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+
+      - name: Install the project and dbt for BigQuery
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e . "dbt-bigquery==1.10.3"
+
+      - name: Load the fictional warehouse into BigQuery
+        run: python scripts/load_to_bigquery.py
+
+      - name: dbt build on BigQuery (models + data tests)
+        working-directory: transform
+        run: python run_dbt.py build --profiles-dir . --target bigquery

@@ -1,0 +1,4 @@
+{"lists": [
+  {"id": 11, "name": "Newsletter (fictional)", "folderId": 1, "totalSubscribers": 1200, "uniqueSubscribers": 1150, "totalBlacklisted": 40},
+  {"id": 12, "name": "Store A event (fictional)", "folderId": 2, "totalSubscribers": 300, "uniqueSubscribers": 300, "totalBlacklisted": 5}
+], "count": 3}

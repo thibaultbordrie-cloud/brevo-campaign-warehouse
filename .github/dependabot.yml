@@ -1,0 +1,12 @@
+# Weekly pull requests when a GitHub Action or a Python dependency has a new version,
+# so security fixes are not missed (and a breaking release shows up in CI first).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly

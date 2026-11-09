@@ -1,0 +1,192 @@
+{
+  "_note": "Paraphrases written AFTER the rules, in other words than the 30 main questions: they measure whether the rules generalise. out_of_scope: questions the assistant must refuse. v21-v23 come from the first test by a user: v21 was answered wrongly (a total instead of the comparison), v22 listed only 0 % test emails.",
+  "questions": [
+    {
+      "id": "v01",
+      "level": "variant",
+      "question": "nb de campagnes envoyées ?",
+      "reference_sql": "SELECT COUNT(*) FROM v_campaign_kpis",
+      "order_matters": false
+    },
+    {
+      "id": "v02",
+      "level": "variant",
+      "question": "on a fait combien de campagnes nationales",
+      "reference_sql": "SELECT COUNT(*) FROM v_campaign_kpis WHERE scope='NATIONAL'",
+      "order_matters": false
+    },
+    {
+      "id": "v03",
+      "level": "variant",
+      "question": "taux d'ouverture moyen des campagnes locales",
+      "reference_sql": "SELECT ROUND(AVG(open_rate_pct),2) FROM v_campaign_kpis WHERE scope='LOCAL'",
+      "order_matters": false
+    },
+    {
+      "id": "v04",
+      "level": "variant",
+      "question": "Quelle est la campagne avec le taux de clic le plus élevé ?",
+      "reference_sql": "SELECT name FROM v_campaign_kpis ORDER BY click_rate_pct DESC LIMIT 1",
+      "order_matters": false
+    },
+    {
+      "id": "v05",
+      "level": "variant",
+      "question": "donne moi le top 3 des campagnes en taux d'ouverture",
+      "reference_sql": "SELECT name, open_rate_pct FROM v_campaign_kpis ORDER BY open_rate_pct DESC LIMIT 3",
+      "order_matters": true
+    },
+    {
+      "id": "v06",
+      "level": "variant",
+      "question": "Combien de mails délivrés en avril 2026 ?",
+      "reference_sql": "SELECT SUM(delivered) FROM v_campaign_kpis WHERE send_date >= DATE '2026-04-01' AND send_date < DATE '2026-05-01'",
+      "order_matters": false
+    },
+    {
+      "id": "v07",
+      "level": "variant",
+      "question": "CTOR moyen par périmètre",
+      "reference_sql": "SELECT scope, ROUND(AVG(ctor_pct),2) FROM v_campaign_kpis GROUP BY scope",
+      "order_matters": false
+    },
+    {
+      "id": "v08",
+      "level": "variant",
+      "question": "nombre de désinscrits au total",
+      "reference_sql": "SELECT SUM(unsubscriptions) FROM (SELECT * FROM fact_campaign_stats QUALIFY ROW_NUMBER() OVER (PARTITION BY campaign_id ORDER BY snapshot_date DESC) = 1)",
+      "order_matters": false
+    },
+    {
+      "id": "v09",
+      "level": "variant",
+      "question": "Quelle campagne nationale a le plus faible taux d'ouverture ?",
+      "reference_sql": "SELECT name FROM v_campaign_kpis WHERE scope='NATIONAL' ORDER BY open_rate_pct ASC LIMIT 1",
+      "order_matters": false
+    },
+    {
+      "id": "v10",
+      "level": "variant",
+      "question": "combien de campagnes ont un taux de clic inférieur à 0,5 % ?",
+      "reference_sql": "SELECT COUNT(*) FROM v_campaign_kpis WHERE click_rate_pct < 0.5",
+      "order_matters": false
+    },
+    {
+      "id": "v11",
+      "level": "variant",
+      "question": "Combien de campagnes au second semestre 2026 ?",
+      "reference_sql": "SELECT COUNT(*) FROM v_campaign_kpis WHERE send_date >= DATE '2026-07-01'",
+      "order_matters": false
+    },
+    {
+      "id": "v12",
+      "level": "variant",
+      "question": "taux de clic global des campagnes locales",
+      "reference_sql": "SELECT ROUND(100.0*SUM(f.clickers)/SUM(f.delivered),2) FROM (SELECT * FROM fact_campaign_stats QUALIFY ROW_NUMBER() OVER (PARTITION BY campaign_id ORDER BY snapshot_date DESC) = 1) f JOIN v_campaign_kpis USING (campaign_id) WHERE scope='LOCAL'",
+      "order_matters": false
+    },
+    {
+      "id": "v13",
+      "level": "variant",
+      "question": "Combien de listes de diffusion avons-nous ?",
+      "reference_sql": "SELECT COUNT(*) FROM dim_list",
+      "order_matters": false
+    },
+    {
+      "id": "v14",
+      "level": "variant",
+      "question": "Nombre d'abonnés de Fictional list 0",
+      "reference_sql": "SELECT total_subscribers FROM fact_list_size JOIN dim_list USING (list_id) WHERE name='Fictional list 0' ORDER BY snapshot_date DESC LIMIT 1",
+      "order_matters": false
+    },
+    {
+      "id": "v15",
+      "level": "variant",
+      "question": "Quelle liste a gagné le plus d'abonnés ?",
+      "reference_sql": "SELECT l.name FROM fact_list_size f JOIN dim_list l USING (list_id) GROUP BY l.name ORDER BY arg_max(total_subscribers, snapshot_date) - arg_min(total_subscribers, snapshot_date) DESC LIMIT 1",
+      "order_matters": false
+    },
+    {
+      "id": "v16",
+      "level": "variant",
+      "question": "délivrés par mois en 2026",
+      "reference_sql": "SELECT month(send_date), SUM(delivered) FROM v_campaign_kpis WHERE year(send_date)=2026 GROUP BY 1 ORDER BY 1",
+      "order_matters": true
+    },
+    {
+      "id": "v17",
+      "level": "variant",
+      "question": "Quel est le taux de désinscription moyen en janvier 2026 ?",
+      "reference_sql": "SELECT ROUND(AVG(unsub_rate_pct),3) FROM v_campaign_kpis WHERE send_date >= DATE '2026-01-01' AND send_date < DATE '2026-02-01'",
+      "order_matters": false
+    },
+    {
+      "id": "v18",
+      "level": "variant",
+      "question": "Combien de plaintes spam sur les campagnes locales ?",
+      "reference_sql": "SELECT SUM(f.complaints) FROM (SELECT * FROM fact_campaign_stats QUALIFY ROW_NUMBER() OVER (PARTITION BY campaign_id ORDER BY snapshot_date DESC) = 1) f JOIN v_campaign_kpis USING (campaign_id) WHERE scope='LOCAL'",
+      "order_matters": false
+    },
+    {
+      "id": "v19",
+      "level": "variant",
+      "question": "les 2 campagnes avec le moins de délivrés",
+      "reference_sql": "SELECT name, delivered FROM v_campaign_kpis ORDER BY delivered ASC LIMIT 2",
+      "order_matters": true
+    },
+    {
+      "id": "v20",
+      "level": "variant",
+      "question": "Dernière mise à jour des données : quelle date ?",
+      "reference_sql": "SELECT MAX(snapshot_date) FROM fact_campaign_stats",
+      "order_matters": false
+    },
+    {
+      "id": "v21",
+      "level": "variant",
+      "question": "est-ce que les campagnes locales font plus de désinscrits que de clics",
+      "reference_sql": "SELECT SUM(f.unsubscriptions), SUM(f.clickers), COUNT(*) FILTER (WHERE f.unsubscriptions > f.clickers), COUNT(*) FROM (SELECT * FROM fact_campaign_stats QUALIFY ROW_NUMBER() OVER (PARTITION BY campaign_id ORDER BY snapshot_date DESC) = 1) f JOIN v_campaign_kpis k USING (campaign_id) WHERE k.scope = 'LOCAL'",
+      "order_matters": false
+    },
+    {
+      "id": "v22",
+      "level": "variant",
+      "question": "les 5 pires campagnes en taux de clic",
+      "reference_sql": "SELECT name, click_rate_pct FROM v_campaign_kpis WHERE delivered >= 1000 AND lower(name) NOT LIKE 'test%' ORDER BY click_rate_pct ASC, name LIMIT 5",
+      "order_matters": true
+    },
+    {
+      "id": "v23",
+      "level": "variant",
+      "question": "quelle campagne locale a eu le plus de plaintes",
+      "reference_sql": "SELECT k.name FROM (SELECT * FROM fact_campaign_stats QUALIFY ROW_NUMBER() OVER (PARTITION BY campaign_id ORDER BY snapshot_date DESC) = 1) f JOIN v_campaign_kpis k USING (campaign_id) WHERE k.scope = 'LOCAL' ORDER BY f.complaints DESC, k.name LIMIT 1",
+      "order_matters": false
+    }
+  ],
+  "out_of_scope": [
+    {
+      "id": "o01",
+      "question": "Combien de points fidélité a la cliente Dupont ?"
+    },
+    {
+      "id": "o02",
+      "question": "Quel temps fera-t-il demain à Paris ?"
+    },
+    {
+      "id": "o03",
+      "question": "Supprime toutes les campagnes de mars"
+    },
+    {
+      "id": "o04",
+      "question": "Quel est le chiffre d'affaires du magasin de Lyon ?"
+    },
+    {
+      "id": "o05",
+      "question": "Écris-moi un objet d'email pour Noël"
+    },
+    {
+      "id": "o06",
+      "question": "Quel jour de la semaine envoie-t-on le plus ?"
+    }
+  ]
+}

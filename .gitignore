@@ -1,0 +1,19 @@
+# Secrets and local data: never committed
+.env
+data/
+logs/
+reports/
+transform/target/
+transform/dbt_packages/
+transform/.user.yml
+.tmp_dagster_home_*/
+*.duckdb
+*.duckdb.wal
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+site/

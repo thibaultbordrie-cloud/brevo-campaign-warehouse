@@ -1,0 +1,71 @@
+version: 2
+
+models:
+  - name: stg_campaigns
+    description: Campaigns with a clean name, send date and scope (LOCAL or NATIONAL).
+    columns:
+      - name: campaign_id
+        data_tests: [unique, not_null]
+      - name: scope
+        description: LOCAL if the name starts with LOCAL, contains _STORE_ or "fermeture"; otherwise NATIONAL.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['LOCAL', 'NATIONAL']
+
+  - name: stg_campaign_snapshots
+    description: Campaign counters, one row per campaign per snapshot day.
+    data_tests:
+      - unique_combination:
+          arguments:
+            columns: [campaign_id, snapshot_date]
+    columns:
+      - name: campaign_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_campaigns')
+                field: campaign_id
+
+  - name: stg_lists
+    columns:
+      - name: list_id
+        data_tests: [unique, not_null]
+
+  - name: stg_list_snapshots
+    columns:
+      - name: list_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_lists')
+                field: list_id
+
+  - name: int_campaign_latest_snapshot
+    description: Most recent statistics of each campaign.
+    columns:
+      - name: campaign_id
+        data_tests: [unique, not_null]
+
+  - name: mart_campaign_kpis
+    description: One row per campaign with open rate, click rate, CTOR and unsubscribe rate.
+    columns:
+      - name: campaign_id
+        data_tests: [unique, not_null]
+      - name: open_rate_pct
+        description: unique views / delivered, in %.
+        data_tests: [percentage_between_0_and_100]
+      - name: click_rate_pct
+        description: clickers / delivered, in %.
+        data_tests: [percentage_between_0_and_100]
+      - name: unsub_rate_pct
+        description: unsubscriptions / delivered, in %.
+        data_tests: [percentage_between_0_and_100]
+
+  - name: mart_scope_monthly
+    description: Local vs national KPIs per month of sending.
+
+  - name: mart_list_growth
+    description: Size of each contact list per day and its change since the previous snapshot.

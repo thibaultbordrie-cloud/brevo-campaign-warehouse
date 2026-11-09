@@ -1,0 +1,21 @@
+# Connection settings. The database is the file written by the ingestion (python run.py ingest).
+# dbt reads the tables loaded by Python and writes its own models in separate schemas
+# (main_staging, main_intermediate, main_marts), so the ingestion tables are never modified.
+brevo_warehouse:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('WAREHOUSE_DB', '../data/warehouse.duckdb') }}"
+      threads: 1
+    # Cloud copy (bloc 5): FICTIONAL data only, in a BigQuery sandbox. Run from GitHub Actions,
+    # which signs in to Google without any stored key (Workload Identity Federation).
+    bigquery:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('GCP_PROJECT_ID', 'not-set') }}"
+      dataset: brevo
+      location: EU
+      threads: 4
+      job_execution_timeout_seconds: 300
+      maximum_bytes_billed: 1000000000   # cost guard: any query reading more than 1 GB is refused

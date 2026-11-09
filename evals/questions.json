@@ -1,0 +1,215 @@
+{
+  "_note": "30 test questions for the SQL agent, run on the FICTIONAL demo warehouse. reference_sql gives the expected answer; the agent's result must contain the same values (column names do not matter).",
+  "questions": [
+    {
+      "id": "q01",
+      "level": "simple",
+      "question": "Combien de campagnes ont été envoyées au total ?",
+      "reference_sql": "SELECT COUNT(*) FROM v_campaign_kpis",
+      "order_matters": false
+    },
+    {
+      "id": "q02",
+      "level": "simple",
+      "question": "Combien de campagnes locales y a-t-il ?",
+      "reference_sql": "SELECT COUNT(*) FROM v_campaign_kpis WHERE scope = 'LOCAL'",
+      "order_matters": false
+    },
+    {
+      "id": "q03",
+      "level": "simple",
+      "question": "Combien de campagnes nationales y a-t-il ?",
+      "reference_sql": "SELECT COUNT(*) FROM v_campaign_kpis WHERE scope = 'NATIONAL'",
+      "order_matters": false
+    },
+    {
+      "id": "q04",
+      "level": "simple",
+      "question": "Combien d'e-mails ont été délivrés au total, toutes campagnes confondues ?",
+      "reference_sql": "SELECT SUM(delivered) FROM v_campaign_kpis",
+      "order_matters": false
+    },
+    {
+      "id": "q05",
+      "level": "simple",
+      "question": "Quel est le taux d'ouverture moyen des campagnes ?",
+      "reference_sql": "SELECT ROUND(AVG(open_rate_pct), 2) FROM v_campaign_kpis",
+      "order_matters": false
+    },
+    {
+      "id": "q06",
+      "level": "simple",
+      "question": "Quelle campagne a le meilleur taux d'ouverture ?",
+      "reference_sql": "SELECT name FROM v_campaign_kpis ORDER BY open_rate_pct DESC, name LIMIT 1",
+      "order_matters": false
+    },
+    {
+      "id": "q07",
+      "level": "simple",
+      "question": "Quelle campagne a le plus faible taux de clic ?",
+      "reference_sql": "SELECT name FROM v_campaign_kpis ORDER BY click_rate_pct ASC, name LIMIT 1",
+      "order_matters": false
+    },
+    {
+      "id": "q08",
+      "level": "simple",
+      "question": "Combien y a-t-il de listes de contacts ?",
+      "reference_sql": "SELECT COUNT(*) FROM dim_list",
+      "order_matters": false
+    },
+    {
+      "id": "q09",
+      "level": "simple",
+      "question": "Combien d'abonnés compte aujourd'hui la liste « Fictional list 2 » ?",
+      "reference_sql": "SELECT total_subscribers FROM fact_list_size JOIN dim_list USING (list_id) WHERE name = 'Fictional list 2' ORDER BY snapshot_date DESC LIMIT 1",
+      "order_matters": false
+    },
+    {
+      "id": "q10",
+      "level": "simple",
+      "question": "Quel est le taux de désinscription moyen des campagnes locales ?",
+      "reference_sql": "SELECT ROUND(AVG(unsub_rate_pct), 3) FROM v_campaign_kpis WHERE scope = 'LOCAL'",
+      "order_matters": false
+    },
+    {
+      "id": "q11",
+      "level": "simple",
+      "question": "Combien de campagnes ont été envoyées en mars 2026 ?",
+      "reference_sql": "SELECT COUNT(*) FROM v_campaign_kpis WHERE send_date >= DATE '2026-03-01' AND send_date < DATE '2026-04-01'",
+      "order_matters": false
+    },
+    {
+      "id": "q12",
+      "level": "simple",
+      "question": "À quelle date date la dernière photo des statistiques de campagne ?",
+      "reference_sql": "SELECT MAX(snapshot_date) FROM fact_campaign_stats",
+      "order_matters": false
+    },
+    {
+      "id": "q13",
+      "level": "simple",
+      "question": "Combien de campagnes ont un taux d'ouverture supérieur à 15 % ?",
+      "reference_sql": "SELECT COUNT(*) FROM v_campaign_kpis WHERE open_rate_pct > 15",
+      "order_matters": false
+    },
+    {
+      "id": "q14",
+      "level": "simple",
+      "question": "Combien de campagnes de fermeture de magasin ont été envoyées ?",
+      "reference_sql": "SELECT COUNT(*) FROM v_campaign_kpis WHERE lower(name) LIKE '%fermeture%'",
+      "order_matters": false
+    },
+    {
+      "id": "q15",
+      "level": "simple",
+      "question": "Quel est le CTOR moyen des campagnes nationales ?",
+      "reference_sql": "SELECT ROUND(AVG(ctor_pct), 2) FROM v_campaign_kpis WHERE scope = 'NATIONAL'",
+      "order_matters": false
+    },
+    {
+      "id": "q16",
+      "level": "complex",
+      "question": "Quelles sont les 5 campagnes qui ont le plus de délivrés ? Donne le nom et le nombre de délivrés, du plus grand au plus petit.",
+      "reference_sql": "SELECT name, delivered FROM v_campaign_kpis ORDER BY delivered DESC LIMIT 5",
+      "order_matters": true
+    },
+    {
+      "id": "q17",
+      "level": "complex",
+      "question": "Combien de plaintes pour spam au total, en ne prenant que la dernière photo de chaque campagne ?",
+      "reference_sql": "SELECT SUM(complaints) FROM (SELECT * FROM fact_campaign_stats QUALIFY ROW_NUMBER() OVER (PARTITION BY campaign_id ORDER BY snapshot_date DESC) = 1)",
+      "order_matters": false
+    },
+    {
+      "id": "q18",
+      "level": "complex",
+      "question": "Combien de campagnes ont eu plus de désinscrits que de cliqueurs ?",
+      "reference_sql": "SELECT COUNT(*) FROM (SELECT * FROM fact_campaign_stats QUALIFY ROW_NUMBER() OVER (PARTITION BY campaign_id ORDER BY snapshot_date DESC) = 1) WHERE unsubscriptions > clickers",
+      "order_matters": false
+    },
+    {
+      "id": "q19",
+      "level": "complex",
+      "question": "Quel est le taux de clic moyen par périmètre (local et national) ?",
+      "reference_sql": "SELECT scope, ROUND(AVG(click_rate_pct), 2) FROM v_campaign_kpis GROUP BY scope",
+      "order_matters": false
+    },
+    {
+      "id": "q20",
+      "level": "complex",
+      "question": "Combien de campagnes ont été envoyées chaque mois de 2026 ? Une ligne par mois, dans l'ordre.",
+      "reference_sql": "SELECT month(send_date) AS m, COUNT(*) FROM v_campaign_kpis WHERE year(send_date) = 2026 GROUP BY m ORDER BY m",
+      "order_matters": true
+    },
+    {
+      "id": "q21",
+      "level": "complex",
+      "question": "Quel mois de 2026 a le meilleur taux d'ouverture moyen ? Donne le numéro du mois.",
+      "reference_sql": "SELECT month(send_date) FROM v_campaign_kpis WHERE year(send_date) = 2026 GROUP BY 1 ORDER BY AVG(open_rate_pct) DESC LIMIT 1",
+      "order_matters": false
+    },
+    {
+      "id": "q22",
+      "level": "complex",
+      "question": "Quel est le total des hard bounces, sur la dernière photo de chaque campagne ?",
+      "reference_sql": "SELECT SUM(hard_bounces) FROM (SELECT * FROM fact_campaign_stats QUALIFY ROW_NUMBER() OVER (PARTITION BY campaign_id ORDER BY snapshot_date DESC) = 1)",
+      "order_matters": false
+    },
+    {
+      "id": "q23",
+      "level": "complex",
+      "question": "Quelle liste a perdu le plus d'abonnés entre la première et la dernière photo ? Donne son nom.",
+      "reference_sql": "SELECT l.name FROM fact_list_size f JOIN dim_list l USING (list_id) GROUP BY l.name ORDER BY arg_max(total_subscribers, snapshot_date) - arg_min(total_subscribers, snapshot_date) ASC LIMIT 1",
+      "order_matters": false
+    },
+    {
+      "id": "q24",
+      "level": "complex",
+      "question": "De combien a varié le nombre total de contacts en liste noire, toutes listes confondues, entre la première et la dernière photo ?",
+      "reference_sql": "SELECT SUM(last) - SUM(first) FROM (SELECT arg_max(total_blacklisted, snapshot_date) AS last, arg_min(total_blacklisted, snapshot_date) AS first FROM fact_list_size GROUP BY list_id)",
+      "order_matters": false
+    },
+    {
+      "id": "q25",
+      "level": "complex",
+      "question": "Pour chaque périmètre, donne le nombre de campagnes et le total d'e-mails délivrés.",
+      "reference_sql": "SELECT scope, COUNT(*), SUM(delivered) FROM v_campaign_kpis GROUP BY scope",
+      "order_matters": false
+    },
+    {
+      "id": "q26",
+      "level": "complex",
+      "question": "Quel est le taux d'ouverture global pondéré (somme des ouvreurs uniques divisée par la somme des délivrés), en pourcentage arrondi à 2 décimales ?",
+      "reference_sql": "SELECT ROUND(100.0 * SUM(unique_views) / SUM(delivered), 2) FROM (SELECT * FROM fact_campaign_stats QUALIFY ROW_NUMBER() OVER (PARTITION BY campaign_id ORDER BY snapshot_date DESC) = 1)",
+      "order_matters": false
+    },
+    {
+      "id": "q27",
+      "level": "complex",
+      "question": "Combien de cliqueurs supplémentaires sont apparus entre la première et la dernière photo, toutes campagnes confondues ?",
+      "reference_sql": "SELECT SUM(last) - SUM(first) FROM (SELECT arg_max(clickers, snapshot_date) AS last, arg_min(clickers, snapshot_date) AS first FROM fact_campaign_stats GROUP BY campaign_id)",
+      "order_matters": false
+    },
+    {
+      "id": "q28",
+      "level": "complex",
+      "question": "Quelles sont les 3 campagnes locales qui ont le meilleur CTOR ? Donne leur nom et leur CTOR, du meilleur au moins bon.",
+      "reference_sql": "SELECT name, ctor_pct FROM v_campaign_kpis WHERE scope = 'LOCAL' ORDER BY ctor_pct DESC LIMIT 3",
+      "order_matters": true
+    },
+    {
+      "id": "q29",
+      "level": "complex",
+      "question": "Quel est le nombre moyen de délivrés par campagne pour les campagnes envoyées au premier semestre 2026 (janvier à juin) ? Arrondi à l'unité.",
+      "reference_sql": "SELECT ROUND(AVG(delivered)) FROM v_campaign_kpis WHERE send_date >= DATE '2026-01-01' AND send_date < DATE '2026-07-01'",
+      "order_matters": false
+    },
+    {
+      "id": "q30",
+      "level": "complex",
+      "question": "Quel est le taux global de soft bounces (somme des soft bounces divisée par la somme des envoyés), en pourcentage arrondi à 2 décimales, sur la dernière photo de chaque campagne ?",
+      "reference_sql": "SELECT ROUND(100.0 * SUM(soft_bounces) / SUM(sent), 2) FROM (SELECT * FROM fact_campaign_stats QUALIFY ROW_NUMBER() OVER (PARTITION BY campaign_id ORDER BY snapshot_date DESC) = 1)",
+      "order_matters": false
+    }
+  ]
+}
