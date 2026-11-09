@@ -1,12 +1,20 @@
 # Weekly pull requests when a GitHub Action or a Python dependency has a new version,
 # so security fixes are not missed (and a breaking release shows up in CI first).
+# Updates are grouped: one pull request per ecosystem, so packages that must move
+# together (dagster, dagster-webserver, dagster-dbt) are tested together.
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
   - package-ecosystem: pip
-    directory: /
+    directories: ["/", "/orchestration"]
     schedule:
       interval: weekly
+    groups:
+      python:
+        patterns: ["*"]
